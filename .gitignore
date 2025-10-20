@@ -1,2 +1,31 @@
-.venv
-secrets.toml
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.env
+.python-version
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/
+
+# Caches & Reports
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.cache/
+
+# Build
+build/
+dist/
