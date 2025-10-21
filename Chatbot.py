@@ -22,6 +22,7 @@ if prompt := st.chat_input():
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=st.session_state.messages)
-    msg = response.choices[0].message
-    st.session_state.messages.append(msg)
-    st.chat_message("assistant").write(msg.content)
+    assistant_msg = response.choices[0].message
+    assistant_dict = {"role": assistant_msg["role"], "content": assistant_msg["content"]}
+    st.session_state.messages.append(assistant_dict)
+    st.chat_message("assistant").write(assistant_dict["content"])
