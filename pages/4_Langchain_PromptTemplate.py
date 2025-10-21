@@ -1,6 +1,7 @@
+import os
 import streamlit as st
-from langchain.llms import OpenAI
-from langchain.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
 
 st.title("🦜🔗 Langchain - Blog Outline Generator App")
 
@@ -8,16 +9,14 @@ openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
 
 
 def blog_outline(topic):
-    # Instantiate LLM model
-    llm = OpenAI(model_name="gpt-3.5-turbo-instruct", openai_api_key=openai_api_key)
-    # Prompt
-    template = "As an experienced data scientist and technical writer, generate an outline for a blog about {topic}."
-    prompt = PromptTemplate(input_variables=["topic"], template=template)
-    prompt_query = prompt.format(topic=topic)
-    # Run LLM model
-    response = llm(prompt_query)
-    # Print results
-    return st.info(response)
+    os.environ["OPENAI_API_KEY"] = openai_api_key
+    llm = ChatOpenAI(model="gpt-4o-mini")
+    prompt = ChatPromptTemplate.from_messages([
+        ("human", "As an experienced data scientist and technical writer, generate an outline for a blog about {topic}."),
+    ])
+    chain = prompt | llm
+    response = chain.invoke({"topic": topic})
+    return st.info(response.content)
 
 
 with st.form("myform"):

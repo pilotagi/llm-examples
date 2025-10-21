@@ -1,5 +1,5 @@
 import streamlit as st
-import anthropic
+from anthropic import Anthropic
 
 with st.sidebar:
     anthropic_api_key = st.text_input("Anthropic API Key", key="file_qa_api_key", type="password")
@@ -19,15 +19,14 @@ if uploaded_file and question and not anthropic_api_key:
 
 if uploaded_file and question and anthropic_api_key:
     article = uploaded_file.read().decode()
-    prompt = f"""{anthropic.HUMAN_PROMPT} Here's an article:\n\n<article>
-    {article}\n\n</article>\n\n{question}{anthropic.AI_PROMPT}"""
+    user_content = f"Here's an article:\n\n<article>\n{article}\n</article>\n\n{question}"
 
-    client = anthropic.Client(anthropic_api_key)
-    response = client.completion(
-        prompt=prompt,
-        stop_sequences=[anthropic.HUMAN_PROMPT],
-        model="claude-v1",
-        max_tokens_to_sample=100,
+    client = Anthropic(api_key=anthropic_api_key)
+    response = client.messages.create(
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=300,
+        messages=[{"role": "user", "content": user_content}],
     )
     st.write("### Answer")
-    st.write(response["completion"])
+    answer = "".join(getattr(block, "text", "") for block in response.content)
+    st.write(answer)

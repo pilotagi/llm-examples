@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI
 import streamlit as st
 
 with st.sidebar:
@@ -18,11 +18,11 @@ if prompt := st.chat_input():
         st.info("Please add your OpenAI API key to continue.")
         st.stop()
 
-    openai.api_key = openai_api_key
+    client = OpenAI(api_key=openai_api_key)
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=st.session_state.messages)
+    response = client.chat.completions.create(model="gpt-4o-mini", messages=st.session_state.messages)
     assistant_msg = response.choices[0].message
-    assistant_dict = {"role": assistant_msg["role"], "content": assistant_msg["content"]}
+    assistant_dict = {"role": assistant_msg.role, "content": assistant_msg.content}
     st.session_state.messages.append(assistant_dict)
     st.chat_message("assistant").write(assistant_dict["content"])

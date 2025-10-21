@@ -1,9 +1,16 @@
+import os
 import streamlit as st
 
 from langchain.agents import initialize_agent, AgentType
-from langchain.callbacks import StreamlitCallbackHandler
-from langchain.chat_models import ChatOpenAI
-from langchain.tools import DuckDuckGoSearchRun
+try:
+    from langchain.callbacks import StreamlitCallbackHandler
+except Exception:
+    from langchain.callbacks.streamlit import StreamlitCallbackHandler
+from langchain_openai import ChatOpenAI
+try:
+    from langchain_community.tools import DuckDuckGoSearchRun
+except Exception:
+    from langchain.tools import DuckDuckGoSearchRun
 
 with st.sidebar:
     openai_api_key = st.text_input("OpenAI API Key", key="langchain_search_api_key_openai", type="password")
@@ -33,11 +40,13 @@ if prompt := st.chat_input(placeholder="Who won the Women's U.S. Open in 2018?")
         st.info("Please add your OpenAI API key to continue.")
         st.stop()
 
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", openai_api_key=openai_api_key, streaming=True)
+    os.environ["OPENAI_API_KEY"] = openai_api_key
+    llm = ChatOpenAI(model="gpt-4o-mini", streaming=True)
     search = DuckDuckGoSearchRun(name="Search")
     search_agent = initialize_agent([search], llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, handle_parsing_errors=True)
     with st.chat_message("assistant"):
         st_cb = StreamlitCallbackHandler(st.container(), expand_new_thoughts=False)
-        response = search_agent.run(prompt, callbacks=[st_cb])
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        st.write(response)
+        result = search_agent.invoke({"input": prompt}, config={"callbacks": [st_cb]})
+        response_text = result.get("output") if isinstance(result, dict) else result
+        st.session_state.messages.append({"role": "assistant", "content": response_text})
+        st.write(response_text)
