@@ -20,6 +20,41 @@ Current examples include:
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://llm-examples.streamlit.app/)
 
+## Recent Updates (2025)
+
+### Dependency Upgrades
+
+All dependencies have been upgraded to the latest versions:
+
+- **Streamlit**: 1.51.0
+- **LangChain**: 1.0.3 (migrated from deprecated APIs)
+- **OpenAI**: 2.7.1
+- **Anthropic**: 0.72.0 (using Claude 3.5 Sonnet 20241022)
+- **LangGraph**: Latest (replaced deprecated initialize_agent)
+
+### Breaking Changes Fixed
+
+- Migrated from deprecated `initialize_agent` to new `create_react_agent` from LangGraph
+- Updated to latest Claude model version
+- Fixed all compatibility issues with LangChain 1.0+
+
+### Testing
+
+Comprehensive test suite added with 80+ tests covering:
+
+- Unit tests for all pages
+- Integration tests for file structure and syntax
+- API compatibility validation
+- No deprecated API usage
+
+Run tests:
+```bash
+pip install -r requirements-test.txt
+pytest tests/
+```
+
+See `tests/README.md` for detailed testing documentation.
+
 ## Get an OpenAI API key
 
 You can get your own OpenAI API key by following the following instructions:

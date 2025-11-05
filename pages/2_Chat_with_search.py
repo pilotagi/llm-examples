@@ -1,16 +1,9 @@
 import os
 import streamlit as st
 
-from langchain.agents import initialize_agent, AgentType
-try:
-    from langchain.callbacks import StreamlitCallbackHandler
-except Exception:
-    from langchain.callbacks.streamlit import StreamlitCallbackHandler
 from langchain_openai import ChatOpenAI
-try:
-    from langchain_community.tools import DuckDuckGoSearchRun
-except Exception:
-    from langchain.tools import DuckDuckGoSearchRun
+from langchain_community.tools import DuckDuckGoSearchRun
+from langgraph.prebuilt import create_react_agent
 
 with st.sidebar:
     openai_api_key = st.text_input("OpenAI API Key", key="langchain_search_api_key_openai", type="password")
@@ -20,7 +13,7 @@ with st.sidebar:
 st.title("🔎 LangChain - Chat with search")
 
 """
-In this example, we're using `StreamlitCallbackHandler` to display the thoughts and actions of an agent in an interactive Streamlit app.
+In this example, we're using a LangGraph ReAct agent with DuckDuckGo search to answer questions.
 Try more LangChain 🤝 Streamlit Agent examples at [github.com/langchain-ai/streamlit-agent](https://github.com/langchain-ai/streamlit-agent).
 """
 
@@ -43,10 +36,40 @@ if prompt := st.chat_input(placeholder="Who won the Women's U.S. Open in 2018?")
     os.environ["OPENAI_API_KEY"] = openai_api_key
     llm = ChatOpenAI(model="gpt-4o-mini", streaming=True)
     search = DuckDuckGoSearchRun(name="Search")
-    search_agent = initialize_agent([search], llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, handle_parsing_errors=True)
+
+    # Create the ReAct agent using the new LangGraph API
+    agent_executor = create_react_agent(llm, [search])
+
     with st.chat_message("assistant"):
-        st_cb = StreamlitCallbackHandler(st.container(), expand_new_thoughts=False)
-        result = search_agent.invoke({"input": prompt}, config={"callbacks": [st_cb]})
-        response_text = result.get("output") if isinstance(result, dict) else result
-        st.session_state.messages.append({"role": "assistant", "content": response_text})
-        st.write(response_text)
+        # Create a placeholder for streaming output
+        response_placeholder = st.empty()
+        full_response = ""
+
+        # Stream the agent's response
+        try:
+            for chunk in agent_executor.stream(
+                {"messages": [("user", prompt)]},
+                stream_mode="values"
+            ):
+                # Get the last message from the agent
+                if "messages" in chunk and len(chunk["messages"]) > 0:
+                    last_message = chunk["messages"][-1]
+                    # Check if it's an AI message
+                    if hasattr(last_message, "content") and hasattr(last_message, "type"):
+                        if last_message.type == "ai" and last_message.content:
+                            full_response = last_message.content
+                            response_placeholder.write(full_response)
+
+            # Store the final response
+            if full_response:
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+            else:
+                # Fallback in case we didn't get a response
+                fallback_msg = "I'm sorry, I couldn't process that request."
+                response_placeholder.write(fallback_msg)
+                st.session_state.messages.append({"role": "assistant", "content": fallback_msg})
+
+        except Exception as e:
+            error_msg = f"An error occurred: {str(e)}"
+            response_placeholder.write(error_msg)
+            st.session_state.messages.append({"role": "assistant", "content": error_msg})

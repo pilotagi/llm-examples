@@ -23,7 +23,7 @@ if uploaded_file and question and anthropic_api_key:
 
     client = Anthropic(api_key=anthropic_api_key)
     response = client.messages.create(
-        model="claude-3-5-sonnet-20240620",
+        model="claude-3-5-sonnet-20241022",
         max_tokens=300,
         messages=[{"role": "user", "content": user_content}],
     )
